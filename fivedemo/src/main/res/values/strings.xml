@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">FiveDemo</string>
+    <string name="open_bluetooth" >open BlueTooth</string>
+</resources>

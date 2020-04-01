@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/scanBt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="扫描蓝牙" />
+
+        <TextView
+            android:id="@+id/scanMessageTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:background="@color/yellow"
+            android:text="扫描尚未开始"
+            tools:text="扫描中。。。。。。" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <ListView
+            android:id="@+id/scanDevicesLV"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:background="@color/colorAccent" />
+
+        <ListView
+            android:id="@+id/pairDevicesLV"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:background="@color/mediumturquoise" />
+    </LinearLayout>
+</LinearLayout>
