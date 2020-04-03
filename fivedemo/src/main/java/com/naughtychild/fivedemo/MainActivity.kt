@@ -34,8 +34,8 @@ class MainActivity : AppCompatActivity() {
     val pairDevicesAdapter by lazy {
         ArrayAdapter<String>(this@MainActivity, R.layout.list_item)
     }
-    var receiveThread: Thread? = null
-
+    var serverThread: Thread? = null
+    var clientThread: Thread? = null
     lateinit var receiver: BroadcastReceiver
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity() {
         }
         serverBt.click {
             serverStart()
-
         }
         clientBt.click {
 
@@ -82,7 +81,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun clientStart(device: BluetoothDevice) {
-        object : Thread() {
+        clientThread = object : Thread() {
             override fun run() {
                 super.run()
                 try {
@@ -94,29 +93,26 @@ class MainActivity : AppCompatActivity() {
                 }
                 handleClient(socket)
             }
-        }.start()
-
+        }
+        clientThread?.start()
     }
 
     private fun handleClient(socket: BluetoothSocket?) {
-        object : Thread() {
-            override fun run() {
-                super.run()
-                try {
-                    outS = socket?.outputStream
-                    sleep(1000)
-                    outS?.write("sdsd".toByteArray())
-                    Log.d("MainActivity", "run: 客户端写入完成")
-                } catch (e: Exception) {
-                    Log.d("MainActivity", "run:客户端写入失败 ${e.message}")
-                }
+        try {
+            outS = socket!!.outputStream
+            for (i in 0..5) {
+                Thread.sleep(1000)
+                outS!!.write("今天太阳不错呀".toByteArray())
             }
-        }.start()
+            Log.d("MainActivity", "run: 客户端写入完成")
+        } catch (e: Exception) {
+            Log.d("MainActivity", "run:客户端写入失败 ${e.message}")
+        }
     }
 
     private fun serverStart() {
         Log.d("MainActivity", "serverStart: ")
-        val serverThread = object : Thread() {
+        serverThread = object : Thread() {
             override fun run() {
                 super.run()
                 if (bluetoothAdapter.isDiscovering) {
@@ -140,30 +136,26 @@ class MainActivity : AppCompatActivity() {
                 startHandleServer()
             }
         }
-        serverThread.start()
+        serverThread?.start()
     }
 
     private fun startHandleServer() {
         Log.d("MainActivity", "startHandleServer: ")
         try {
-            receiveThread = object : Thread() {
-                override fun run() {
-                    super.run()
-                    try {
-                        input = socket?.inputStream
-                        val byteArray = ByteArray(1024)
-                        while (true) {
-                            val str = input?.read(byteArray)
-                            Log.d("MainActivity", "run:服务端接收完成 ${byteArray.toString(charset("utf-8"))}")
-                        }
-                    } catch (e: Exception) {
-                        Log.d("MainActivity", "run: 服务端接收失败${e.message}")
-                    }
+            try {
+                input = socket!!.inputStream
+                val byteArray = ByteArray(1024)
+                while (true) {
+                    val length = input!!.read(byteArray)
+                    // 创建接收的信息的字符串
+                    val readMessage = String(byteArray, 0, length ?: 0) //用系统默认的字符集把字节数组的一个序列转换为字符串
+                    Log.d("MainActivity", "run:服务端接收完成:$readMessage)}")
                 }
+            } catch (e: Exception) {
+                Log.d("MainActivity", "run: 服务端接收失败11${e.message}")
             }
-            receiveThread?.start()
         } catch (e: Exception) {
-            Log.d("MainActivity", "startHandle:服务端接收失败${e.message} ")
+            Log.d("MainActivity", "startHandle:服务端接收失败22${e.message} ")
         }
     }
 
