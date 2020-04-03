@@ -18,8 +18,10 @@ import androidx.core.app.ActivityCompat
 import com.naughtychild.fivedemo.ext.click
 import com.naughtychild.fivedemo.ext.toast
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -81,20 +83,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun clientStart(device: BluetoothDevice) {
-        clientThread = object : Thread() {
-            override fun run() {
-                super.run()
-                try {
-                    socket = device.createRfcommSocketToServiceRecord(MY_UUID)
-                    socket?.connect()
-                } catch (e: Exception) {
-                    Log.d("MainActivity", "run: 客户端连接失败")
-                    return
-                }
-                handleClient(socket)
+        Log.d("MainActivity", "clientStart: ")
+        GlobalScope.launch(Dispatchers.IO) {
+            socket = getClientSocket(device)
+            if (clientConnect(socket)) {
+                chatWithServer(socket!!)
             }
         }
-        clientThread?.start()
+//        clientThread = object : Thread() {
+//            override fun run() {
+//                super.run()
+//                try {
+//                    socket = device.createRfcommSocketToServiceRecord(MY_UUID)
+//                    socket?.connect()
+//                } catch (e: Exception) {
+//                    Log.d("MainActivity", "run: 客户端连接失败")
+//                    return
+//                }
+//                handleClient(socket)
+//            }
+//        }
+//        clientThread?.start()
+    }
+
+    private suspend fun chatWithServer(socket: BluetoothSocket) {
+        outS = socket.outputStream
+        for (i in 1 until 5) {
+            outS?.write("今天天气很不错".toByteArray())
+        }
+        Log.d("MainActivity", "chatWithServer: 客户端写入成功")
+    }
+
+    private suspend fun clientConnect(socket: BluetoothSocket?): Boolean {
+        socket?.connect()
+        return true
+    }
+
+    private suspend fun getClientSocket(device: BluetoothDevice): BluetoothSocket? {
+        socket = device.createRfcommSocketToServiceRecord(MY_UUID)
+        return socket
     }
 
     private fun handleClient(socket: BluetoothSocket?) {
@@ -112,36 +139,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun serverStart() {
         Log.d("MainActivity", "serverStart: ")
-        serverThread = object : Thread() {
-            override fun run() {
-                super.run()
-                if (bluetoothAdapter.isDiscovering) {
-                    bluetoothAdapter.cancelDiscovery()
-                }
-                try {
-                    serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord("name", MY_UUID)
-                } catch (e: Exception) {
-                    Log.d("MainActivity", "serverStart: 服务端启动 失败")
-                    return
-                }
-                try {
-                    Log.d("MainActivity", "run: 服务端在监听。。")
-                    socket = serverSocket?.accept()
-                    Log.d("MainActivity", "run: 服务端监听到")
-                } catch (e: Exception) {
-                    Log.d("MainActivity", "serverStart: 服务端连接失败 failed")
-                    return
-                }
-                serverSocket?.close()
-                startHandleServer()
+        GlobalScope.launch(Dispatchers.IO) {
+            if (bluetoothAdapter.isDiscovering) {
+                bluetoothAdapter.cancelDiscovery()
             }
-        }
-        serverThread?.start()
-    }
-
-    private fun startHandleServer() {
-        Log.d("MainActivity", "startHandleServer: ")
-        try {
+            try {
+                serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord("name", MY_UUID)
+            } catch (e: Exception) {
+                Log.d("MainActivity", "serverStart: 服务端启动 失败")
+                return@launch
+            }
+            try {
+                Log.d("MainActivity", "run: 服务端在监听。。")
+                socket = serverSocket?.accept()
+                Log.d("MainActivity", "run: 服务端监听到")
+            } catch (e: Exception) {
+                Log.d("MainActivity", "serverStart: 服务端连接失败 failed")
+                return@launch
+            }
+            serverSocket?.close()
             try {
                 input = socket!!.inputStream
                 val byteArray = ByteArray(1024)
@@ -154,8 +170,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.d("MainActivity", "run: 服务端接收失败11${e.message}")
             }
-        } catch (e: Exception) {
-            Log.d("MainActivity", "startHandle:服务端接收失败22${e.message} ")
         }
     }
 
@@ -174,7 +188,6 @@ class MainActivity : AppCompatActivity() {
         devices.forEach {
             pairDevicesAdapter.add("${it.name}%%${it.address}")
         }
-
         if (bluetoothAdapter.isDiscovering) {
             bluetoothAdapter.cancelDiscovery()
         } else {
@@ -216,7 +229,6 @@ class MainActivity : AppCompatActivity() {
                         if (device.bondState != BluetoothDevice.BOND_BONDED) {
                             return
                         }
-
                         Log.d(
                             "MainActivity",
                             "onReceive: ${device.name}"
