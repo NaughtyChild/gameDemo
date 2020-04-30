@@ -1,2 +1,3 @@
-include ':fourapp', ':fivedemo'
+include ':fourapp', ':fivedemo', ':sevendemo', ':hooktest', ':hooklib', ':legendCor'
 rootProject.name='GameDemo'
+project(':legendCor').projectDir = new File('legendCore')
