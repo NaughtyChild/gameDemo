@@ -2,7 +2,6 @@ package cn.naughtychild.sevendemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.github.martinfrank.geolib.GeoCircle
 
 class MainActivity : AppCompatActivity() {
 
